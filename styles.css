@@ -1,0 +1,874 @@
+/* ==========================================================================
+   PBL - Analizador de errores léxicos
+   Desarrollado por: Pablo Ernesto Butanda López
+   styles.css - DISEÑO COMPACTO DE PANTALLA ÚNICA (ZERO SCROLL GLOBAL)
+   Ultra-rápido, sin lag de GPU, interfaz IDE moderna con pestañas a demanda.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. VARIABLES DE TEMA Y PALETA DE COLORES
+   -------------------------------------------------------------------------- */
+:root {
+    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    --font-code: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+
+    /* Tema Oscuro por Defecto */
+    --bg-base: #090d1a;
+    --bg-surface: #10172a;
+    --bg-surface-elevated: #1e293b;
+    --bg-surface-hover: #293548;
+    --bg-input: #0b1120;
+
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-color-active: #0ea5e9;
+
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    /* Gradientes */
+    --primary-gradient: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+    --primary-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);
+
+    /* Veredictos */
+    --verdict-success-bg: rgba(16, 185, 129, 0.14);
+    --verdict-success-border: #10b981;
+    --verdict-success-text: #34d399;
+
+    --verdict-error-bg: rgba(239, 68, 68, 0.14);
+    --verdict-error-border: #ef4444;
+    --verdict-error-text: #f87171;
+
+    --verdict-warning-bg: rgba(245, 158, 11, 0.14);
+    --verdict-warning-border: #f59e0b;
+    --verdict-warning-text: #fbbf24;
+
+    /* Colores por Categoría de Token */
+    --t-keyword: #c084fc;
+    --t-identifier: #60a5fa;
+    --t-number: #fbbf24;
+    --t-string: #34d399;
+    --t-char: #a7f3d0;
+    --t-operator: #38bdf8;
+    --t-delimiter: #94a3b8;
+    --t-comment: #64748b;
+    --t-preprocessor: #f472b6;
+    --t-error: #ef4444;
+}
+
+[data-theme="light"] {
+    --bg-base: #f1f5f9;
+    --bg-surface: #ffffff;
+    --bg-surface-elevated: #f8fafc;
+    --bg-surface-hover: #e2e8f0;
+    --bg-input: #ffffff;
+
+    --border-color: rgba(0, 0, 0, 0.1);
+    --border-color-active: #0284c7;
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+
+    --t-keyword: #7e22ce;
+    --t-identifier: #1d4ed8;
+    --t-number: #d97706;
+    --t-string: #047857;
+    --t-char: #065f46;
+    --t-operator: #0284c7;
+    --t-delimiter: #475569;
+    --t-comment: #6b7280;
+    --t-preprocessor: #be185d;
+    --t-error: #dc2626;
+
+    --verdict-success-bg: rgba(16, 185, 129, 0.12);
+    --verdict-success-border: #059669;
+    --verdict-success-text: #065f46;
+
+    --verdict-error-bg: rgba(239, 68, 68, 0.12);
+    --verdict-error-border: #dc2626;
+    --verdict-error-text: #991b1b;
+
+    --verdict-warning-bg: rgba(245, 158, 11, 0.12);
+    --verdict-warning-border: #d97706;
+    --verdict-warning-text: #92400e;
+}
+
+/* --------------------------------------------------------------------------
+   2. REINICIO Y CONTENEDOR 100VH SIN SCROLL GLOBAL
+   -------------------------------------------------------------------------- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Cero barra de desplazamiento global */
+    font-family: var(--font-ui);
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+}
+
+.app-viewport {
+    height: 100vh;
+    max-height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Scrollbar interna discreta */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   3. BARRA SUPERIOR COMPACTA (UNA SOLA FILA)
+   -------------------------------------------------------------------------- */
+.top-bar {
+    height: 48px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.brand-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 260px;
+}
+
+.brand-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--primary-gradient);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.brand-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.brand-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.brand-author {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+.brand-author strong {
+    color: #38bdf8;
+}
+
+.controls-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.control-select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    padding: 4px 8px;
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+}
+
+.control-select:focus {
+    border-color: var(--border-color-active);
+}
+
+.select-examples {
+    max-width: 180px;
+}
+
+.realtime-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.btn {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: transform 0.12s ease;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: #fff;
+    box-shadow: var(--primary-shadow);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-surface-hover);
+}
+
+.btn-theme {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 28px;
+    height: 28px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+/* --------------------------------------------------------------------------
+   4. ÁREA DE TRABAJO PRINCIPAL (PANTALLA DIVIDIDA 50/50)
+   -------------------------------------------------------------------------- */
+.main-workspace {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px;
+    min-height: 0; /* Obligatorio para flex layout */
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .main-workspace {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   5. PANEL IZQUIERDO: EDITOR
+   -------------------------------------------------------------------------- */
+.editor-pane {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.pane-header {
+    height: 34px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.pane-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pane-badge {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.editor-container {
+    flex: 1;
+    display: flex;
+    position: relative;
+    background: var(--bg-input);
+    overflow: hidden;
+    min-height: 0;
+}
+
+.line-numbers {
+    padding: 10px 8px 10px 10px;
+    text-align: right;
+    color: var(--text-muted);
+    user-select: none;
+    background: rgba(0, 0, 0, 0.12);
+    border-right: 1px solid var(--border-color);
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    min-width: 38px;
+    overflow: hidden;
+    white-space: pre-line;
+    contain: layout style;
+}
+
+.code-input {
+    flex: 1;
+    height: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    resize: none;
+    outline: none;
+    white-space: pre;
+    overflow: auto;
+    tab-size: 4;
+}
+
+/* --------------------------------------------------------------------------
+   6. PANEL DERECHO: INSPECTOR CON PESTAÑAS
+   -------------------------------------------------------------------------- */
+.inspector-pane {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Veredicto visible compacto */
+.verdict-bar {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.v-card {
+    padding: 6px 10px;
+    border-radius: 5px;
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    gap: 8px;
+}
+
+.v-card.success {
+    background: var(--verdict-success-bg);
+    border-left-color: var(--verdict-success-border);
+    color: var(--verdict-success-text);
+}
+
+.v-card.error {
+    background: var(--verdict-error-bg);
+    border-left-color: var(--verdict-error-border);
+    color: var(--verdict-error-text);
+}
+
+.v-card.warning {
+    background: var(--verdict-warning-bg);
+    border-left-color: var(--verdict-warning-border);
+    color: var(--verdict-warning-text);
+}
+
+.v-card strong {
+    font-weight: 700;
+}
+
+/* Barra de pestañas (Abre la información al pulsar) */
+.tabs-nav {
+    display: flex;
+    background: rgba(0, 0, 0, 0.12);
+    border-bottom: 1px solid var(--border-color);
+    padding: 4px 8px 0 8px;
+    gap: 4px;
+    flex-shrink: 0;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 6px 11px;
+    border-radius: 5px 5px 0 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tab-btn.active {
+    color: #38bdf8;
+    background: var(--bg-surface);
+    border-bottom-color: #38bdf8;
+}
+
+.tab-badge {
+    font-size: 0.68rem;
+    padding: 1px 5px;
+    border-radius: 8px;
+    background: var(--bg-surface-elevated);
+    color: var(--text-muted);
+}
+
+.tab-btn.active .tab-badge {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+}
+
+/* Contenedor de contenidos de pestaña */
+.tabs-viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+}
+
+.tab-content {
+    display: none;
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+    contain: content;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* --------------------------------------------------------------------------
+   7. CONTENIDO DE PESTAÑA 1: RESALTADO
+   -------------------------------------------------------------------------- */
+.code-preview-box {
+    padding: 12px;
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.placeholder-text {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+.t-keyword { color: var(--t-keyword); font-weight: 600; }
+.t-identifier { color: var(--t-identifier); }
+.t-int, .t-float { color: var(--t-number); }
+.t-string { color: var(--t-string); }
+.t-char { color: var(--t-char); }
+.t-operator { color: var(--t-operator); font-weight: 600; }
+.t-delimiter { color: var(--t-delimiter); }
+.t-comment { color: var(--t-comment); font-style: italic; }
+.t-preprocessor { color: var(--t-preprocessor); font-weight: 600; }
+
+.t-error {
+    color: #fff;
+    background: rgba(239, 68, 68, 0.4);
+    text-decoration: underline wavy var(--t-error) 2px;
+    text-underline-offset: 2px;
+    border-radius: 2px;
+    padding: 1px 3px;
+    cursor: help;
+    position: relative;
+    display: inline-block;
+}
+
+.t-error[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    border: 1px solid #ef4444;
+    color: #fee2e2;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-family: var(--font-ui);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+    z-index: 50;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.t-error:hover[data-tooltip]::after {
+    opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   8. CONTENIDO DE PESTAÑA 2: TABLA DE TOKENS
+   -------------------------------------------------------------------------- */
+.tab-header-tools {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.search-field {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    outline: none;
+    width: 100%;
+}
+
+.token-chips-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.mini-chip {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.mini-chip strong {
+    color: var(--text-primary);
+}
+
+.scroll-table-box {
+    max-height: calc(100% - 75px);
+    overflow-y: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    text-align: left;
+}
+
+.data-table th {
+    background: rgba(0, 0, 0, 0.12);
+    color: var(--text-secondary);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.data-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.tb-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   9. CONTENIDO DE PESTAÑA 3: DIAGNÓSTICO
+   -------------------------------------------------------------------------- */
+.diagnostics-scroll-box {
+    padding: 10px 12px;
+}
+
+.diag-section-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.diag-items-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.diag-row {
+    background: var(--bg-surface-elevated);
+    border-left: 3px solid #ef4444;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.diag-row.syntactic {
+    border-left-color: #f59e0b;
+}
+
+.diag-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+}
+
+.diag-header strong {
+    color: #f87171;
+}
+
+.diag-row.syntactic .diag-header strong {
+    color: #fbbf24;
+}
+
+.diag-msg {
+    color: var(--text-primary);
+}
+
+.diag-sub {
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.empty-cell {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* --------------------------------------------------------------------------
+   10. CONTENIDO DE PESTAÑA 4: REGLAS Y TEORÍA
+   -------------------------------------------------------------------------- */
+.theory-scroll-box {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.theory-highlight {
+    background: rgba(2, 132, 199, 0.12);
+    border-left: 3px solid #0284c7;
+    padding: 8px 10px;
+    border-radius: 4px;
+    color: var(--text-primary);
+}
+
+.rules-card {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.rules-card-title {
+    font-weight: 700;
+    color: #38bdf8;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+}
+
+.theory-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.theory-col h4 {
+    color: #38bdf8;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   11. CONTENIDO DE PESTAÑA 5: 12 PRUEBAS
+   -------------------------------------------------------------------------- */
+.tests-scroll-box {
+    padding: 10px 12px;
+}
+
+.tests-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.tests-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+}
+
+.mini-test-card {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 6px 8px;
+    text-align: left;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mini-test-card:hover {
+    border-color: #0ea5e9;
+    background: var(--bg-surface-hover);
+}
+
+.mt-lang {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.mt-code {
+    font-family: var(--font-code);
+    font-size: 0.74rem;
+    color: #f1f5f9;
+    background: rgba(0,0,0,0.25);
+    padding: 1px 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mt-exp {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   12. BARRA DE ESTADO INFERIOR (26PX)
+   -------------------------------------------------------------------------- */
+.bottom-status-bar {
+    height: 26px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.status-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.status-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}

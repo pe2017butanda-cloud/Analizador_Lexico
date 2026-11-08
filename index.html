@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PBL - Analizador de errores léxicos | Pablo Ernesto Butanda López</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-viewport">
+        <!-- ==================================================================
+             1. BARRA SUPERIOR COMPACTA (HEADER + CONTROLES EN UNA SOLA LÍNEA)
+             ================================================================== -->
+        <header class="top-bar">
+            <div class="brand-group">
+                <div class="brand-icon">&lt;/&gt;</div>
+                <div class="brand-info">
+                    <span class="brand-title">PBL - Analizador Léxico</span>
+                    <span class="brand-author">Por: <strong>Pablo Ernesto Butanda López</strong></span>
+                </div>
+            </div>
+
+            <div class="controls-group">
+                <div class="select-wrapper">
+                    <label for="language-select">Lenguaje:</label>
+                    <select id="language-select" class="control-select">
+                        <option value="python" selected>Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="c">Lenguaje C</option>
+                    </select>
+                </div>
+
+                <div class="select-wrapper">
+                    <label for="example-select">Ejemplo:</label>
+                    <select id="example-select" class="control-select select-examples">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+
+                <label class="realtime-label" title="Analizar automáticamente al escribir">
+                    <input type="checkbox" id="realtime-toggle" checked>
+                    <span>En vivo</span>
+                </label>
+
+                <button id="btn-analyze" class="btn btn-primary" title="Ejecutar análisis léxico">
+                    <span>▶</span> Analizar
+                </button>
+
+                <button id="btn-clear" class="btn btn-secondary" title="Limpiar código">
+                    <span>🗑</span> Limpiar
+                </button>
+
+                <button id="theme-toggle" class="btn-theme" title="Alternar tema claro/oscuro">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ==================================================================
+             2. ÁREA DE TRABAJO EN PANTALLA COMPLETA (DIVIDIDA 50/50)
+             ================================================================== -->
+        <main class="main-workspace">
+            <!-- PANEL IZQUIERDO: EDITOR DE CÓDIGO -->
+            <section class="editor-pane">
+                <div class="pane-header">
+                    <div class="pane-title">
+                        <span>📝</span> Código Fuente
+                    </div>
+                    <span id="editor-counter" class="pane-badge">0 caracteres | 1 línea</span>
+                </div>
+                <div class="editor-container">
+                    <div id="line-numbers" class="line-numbers">1</div>
+                    <textarea 
+                        id="code-editor" 
+                        class="code-input" 
+                        placeholder="Escriba o pegue código aquí..."
+                        spellcheck="false"
+                        autocomplete="off"
+                    ></textarea>
+                </div>
+            </section>
+
+            <!-- PANEL DERECHO: INSPECTOR CON PESTAÑAS (SOLO AL PULSAR ABRE INFO) -->
+            <section class="inspector-pane">
+                <!-- Veredicto visible compacto -->
+                <div id="verdict-banner" class="verdict-bar">
+                    <!-- Inyectado por JS -->
+                </div>
+
+                <!-- Barra de pestañas -->
+                <nav class="tabs-nav" aria-label="Secciones de información">
+                    <button class="tab-btn active" data-tab="tab-preview">
+                        <span>🔍</span> Resaltado
+                    </button>
+                    <button class="tab-btn" data-tab="tab-tokens">
+                        <span>📊</span> Tokens <span id="badge-token-count" class="tab-badge">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-errors">
+                        <span>❌</span> Diagnóstico <span id="badge-error-count" class="tab-badge">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-rules">
+                        <span>📜</span> Reglas & Teoría
+                    </button>
+                    <button class="tab-btn" data-tab="tab-tests">
+                        <span>🧪</span> 12 Pruebas
+                    </button>
+                </nav>
+
+                <!-- Contenido de pestañas -->
+                <div class="tabs-viewport">
+                    <!-- Pestaña 1: Vista Previa con Resaltado y Tooltips -->
+                    <div id="tab-preview" class="tab-content active">
+                        <div id="code-preview" class="code-preview-box">
+                            <span class="placeholder-text">El código analizado aparecerá aquí con resaltado por categorías y subrayado de errores.</span>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña 2: Tabla de Tokens Reconocidos -->
+                    <div id="tab-tokens" class="tab-content">
+                        <div class="tab-header-tools">
+                            <input type="search" id="token-search" class="search-field" placeholder="Buscar por lexema, tipo o línea...">
+                            <div id="token-chips" class="token-chips-bar"></div>
+                        </div>
+                        <div class="scroll-table-box">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 45px;">#</th>
+                                        <th>Lexema</th>
+                                        <th>Categoría</th>
+                                        <th>Ubicación</th>
+                                        <th>Long.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="token-table-body">
+                                    <tr><td colspan="5" class="empty-cell">Sin tokens</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña 3: Errores Léxicos y Avisos Sintácticos -->
+                    <div id="tab-errors" class="tab-content">
+                        <div class="diagnostics-scroll-box">
+                            <!-- Errores léxicos -->
+                            <div class="diag-section-title">Errores Léxicos Detectados</div>
+                            <div id="error-items-list" class="diag-items-group">
+                                <div class="empty-cell">✓ Sin errores léxicos.</div>
+                            </div>
+
+                            <!-- Avisos sintácticos -->
+                            <div class="diag-section-title" style="margin-top: 14px;">Avisos Sintácticos (NO Léxicos)</div>
+                            <div id="syntactic-items-list" class="diag-items-group">
+                                <div class="empty-cell">No hay anomalías sintácticas.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña 4: Reglas del Lenguaje y Explicación Didáctica -->
+                    <div id="tab-rules" class="tab-content">
+                        <div class="theory-scroll-box">
+                            <!-- Caso paradigmático -->
+                            <div class="theory-highlight">
+                                <strong>💡 Distinción clave: Error Léxico vs. Sintáctico</strong>
+                                <p style="margin-top: 4px;">
+                                    En <code>20 + * 5;</code>, <strong>todos los tokens son válidos</strong> (número, operador, operador, número, delimitador). El escáner léxico la acepta correctamente. El problema es puramente <strong>sintáctico</strong> (dos operadores binarios consecutivos sin operando intermedio).
+                                </p>
+                            </div>
+
+                            <!-- Reglas del lenguaje activo -->
+                            <div class="rules-card">
+                                <div id="rules-lang-title" class="rules-card-title">Reglas de Python</div>
+                                <div id="rules-lang-body" class="rules-card-content">
+                                    <!-- Dinámico -->
+                                </div>
+                            </div>
+
+                            <!-- Tabla Comparativa -->
+                            <div class="rules-card" style="margin-top: 10px;">
+                                <div class="rules-card-title">Fases del Compilador</div>
+                                <div class="theory-columns">
+                                    <div class="theory-col">
+                                        <h4>1. Analizador Léxico (Scanner)</h4>
+                                        <p>Usa <em>Autómatas Finitos y Regex</em>. Agrupa caracteres en lexemas con significado. Falla con caracteres fuera del alfabeto (@), números mal formados (1.2.3, 12abc) o cadenas sin cerrar.</p>
+                                    </div>
+                                    <div class="theory-col">
+                                        <h4>2. Analizador Sintáctico (Parser)</h4>
+                                        <p>Usa <em>Gramáticas Libres de Contexto (GLC)</em>. Verifica la estructura y construye el árbol sintáctico (AST). Falla con secuencias ilegales como <code>20 + * 5;</code>.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña 5: Suite de los 12 Casos de Prueba Requeridos -->
+                    <div id="tab-tests" class="tab-content">
+                        <div class="tests-scroll-box">
+                            <div class="tests-bar">
+                                <span>Haga clic en cualquier caso para cargarlo en el editor:</span>
+                                <button id="btn-run-tests" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.8rem;">
+                                    ⚡ Validar los 12 casos
+                                </button>
+                            </div>
+                            <div id="tests-grid" class="tests-compact-grid">
+                                <!-- 12 botones inyectados por JS -->
+                            </div>
+                            <div id="tests-summary-box" style="margin-top: 10px; display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ==================================================================
+             3. BARRA DE ESTADO INFERIOR SLIM (26px)
+             ================================================================== -->
+        <footer class="bottom-status-bar">
+            <div class="status-left">
+                <span id="status-indicator" class="status-dot"></span>
+                <span id="status-text">Listo</span>
+            </div>
+            <div class="status-right">
+                <span id="status-token-summary">0 tokens</span>
+                <span>•</span>
+                <span>PBL - Pablo Ernesto Butanda López</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts de la aplicación (compatibles con file:// y localhost) -->
+    <script src="lexer.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
